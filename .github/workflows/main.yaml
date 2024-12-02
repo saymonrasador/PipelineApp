@@ -1,0 +1,36 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+  schedule:
+    - cron: "0 21 * * *" # Diariamente às 21:00
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 7.0
+
+    - name: Restore dependencies
+      run: dotnet restore src/PipelineApp/PipelineApp.csproj
+
+    - name: Build the project
+      run: dotnet build --configuration Release src/PipelineApp/PipelineApp.csproj
+
+    - name: Apply Database Migrations
+      env:
+        CONNECTION_STRING: ${{ secrets.DEVELOP_DB_URL }}
+      run: |
+        dotnet ef database update --project src/PipelineApp/PipelineApp.csproj
+
+    - name: Deploy index.html
+      run: echo "Deploy process for index.html" # Placeholder para integração de deploy
