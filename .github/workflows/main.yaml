@@ -1,50 +1,56 @@
 name: CI/CD Pipeline
 
+# Eventos que disparam o workflow
 on:
   push:
     branches:
-      - main
+      - develop
   pull_request:
     branches:
       - develop
+  schedule:
+    - cron: "0 21 * * *" # Executa diariamente às 21:00 para o branch main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
-    steps:
-    # Passo 1: Checkout do código
-    - name: Checkout code
-      uses: actions/checkout@v2
+    strategy:
+      matrix:
+        branch:
+          - develop
+          - main
 
-    # Passo 2: Configuração do .NET SDK
-    - name: Setup .NET SDK
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '8.0'  # Versão do .NET que você está usando
+        dotnet-version: 7.0
 
-    # Passo 3: Instalar a ferramenta dotnet-ef
-    - name: Install dotnet-ef tool
+    - name: Install Dependencies
+      run: dotnet restore src/PipelineApp/PipelineApp.csproj
+
+    - name: Build Project
+      run: dotnet build --configuration Release src/PipelineApp/PipelineApp.csproj
+
+    - name: Run Database Migrations
+      env:
+        CONNECTION_STRING: ${{ secrets.DEVELOP_DB_URL }}
+      if: matrix.branch == 'develop'
       run: |
-        dotnet tool install --global dotnet-ef  # Instala o dotnet-ef globalmente
-        echo "::add-path::$(dotnet --info | grep 'Base Path' | cut -d ' ' -f 3)/dotnet-tools"  # Adiciona a ferramenta ao PATH
+        dotnet ef database update --project src/PipelineApp/PipelineApp.csproj
 
-    # Passo 4: Restaurar dependências
-    - name: Restore dependencies
-      run: dotnet restore src/PipelineApp/PipelineApp.csproj  # Restaura dependências do projeto
+    - name: Run Database Migrations for Main
+      env:
+        CONNECTION_STRING: ${{ secrets.MAIN_DB_URL }}
+      if: matrix.branch == 'main'
+      run: |
+        dotnet ef database update --project src/PipelineApp/PipelineApp.csproj
 
-    # Passo 5: Compilar o aplicativo
-    - name: Build the application
-      run: dotnet build src/PipelineApp/PipelineApp.csproj --configuration Release  # Compila o projeto
-
-    # Passo 6: Aplicar as migrações do banco de dados
-    - name: Apply Database Migrations
-      run: dotnet ef database update --project src/PipelineApp/PipelineApp.csproj --configuration Release  # Aplica as migrações no banco de dados
-
-    # Passo 7: Publicar a aplicação
-    - name: Publish the application
-      run: dotnet publish src/PipelineApp/PipelineApp.csproj --configuration Release --output ./publish  # Publica o projeto
-
-    # Passo 8: Implantação (exemplo genérico, você pode ajustar conforme sua necessidade)
-    - name: Deploy to production
-      run: echo "Deploying to production..."  # Aqui você colocaria o comando para enviar o projeto para o ambiente de produção
+    - name: Deploy Static HTML
+      run: |
+        echo "Deploying index.html for ${{ matrix.branch }}"
+        # Substituir por comandos reais de deploy estático, como copiar para um servidor
