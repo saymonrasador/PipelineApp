@@ -3,34 +3,40 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
+      - main
+  pull_request:
+    branches:
       - develop
-  schedule:
-    - cron: "0 21 * * *" # Diariamente às 21:00
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
 
-    - name: Setup .NET
+    - name: Setup .NET SDK
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 8.0
+        dotnet-version: '8.0'
+
+    - name: Install dotnet-ef tool
+      run: |
+        dotnet tool install --global dotnet-ef
+        echo "::add-path::$(dotnet --info | grep 'Base Path' | cut -d ' ' -f 3)/dotnet-tools"
 
     - name: Restore dependencies
       run: dotnet restore src/PipelineApp/PipelineApp.csproj
 
-    - name: Build the project
-      run: dotnet build --configuration Release src/PipelineApp/PipelineApp.csproj
+    - name: Build the application
+      run: dotnet build src/PipelineApp/PipelineApp.csproj --configuration Release
 
     - name: Apply Database Migrations
-      env:
-        CONNECTION_STRING: ${{ secrets.DEVELOP_DB_URL }}
-      run: |
-        dotnet ef database update --project src/PipelineApp/PipelineApp.csproj
+      run: dotnet ef database update --project src/PipelineApp/PipelineApp.csproj --configuration Release
 
-    - name: Deploy index.html
-      run: echo "Deploy process for index.html" # Placeholder para integração de deploy
+    - name: Publish the application
+      run: dotnet publish src/PipelineApp/PipelineApp.csproj --configuration Release --output ./publish
+
+    - name: Deploy to production
+      run: echo "Deploying to production..."
