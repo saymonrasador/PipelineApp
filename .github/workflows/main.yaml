@@ -13,30 +13,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # Passo 1: Checkout do código
     - name: Checkout code
       uses: actions/checkout@v2
 
+    # Passo 2: Configuração do .NET SDK
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '8.0'
+        dotnet-version: '8.0'  # Versão do .NET que você está usando
 
+    # Passo 3: Instalar a ferramenta dotnet-ef
     - name: Install dotnet-ef tool
       run: |
-        dotnet tool install --global dotnet-ef
-        echo "::add-path::$(dotnet --info | grep 'Base Path' | cut -d ' ' -f 3)/dotnet-tools"
+        dotnet tool install --global dotnet-ef  # Instala o dotnet-ef globalmente
+        echo "::add-path::$(dotnet --info | grep 'Base Path' | cut -d ' ' -f 3)/dotnet-tools"  # Adiciona a ferramenta ao PATH
 
+    # Passo 4: Restaurar dependências
     - name: Restore dependencies
-      run: dotnet restore src/PipelineApp/PipelineApp.csproj
+      run: dotnet restore src/PipelineApp/PipelineApp.csproj  # Restaura dependências do projeto
 
+    # Passo 5: Compilar o aplicativo
     - name: Build the application
-      run: dotnet build src/PipelineApp/PipelineApp.csproj --configuration Release
+      run: dotnet build src/PipelineApp/PipelineApp.csproj --configuration Release  # Compila o projeto
 
+    # Passo 6: Aplicar as migrações do banco de dados
     - name: Apply Database Migrations
-      run: dotnet ef database update --project src/PipelineApp/PipelineApp.csproj --configuration Release
+      run: dotnet ef database update --project src/PipelineApp/PipelineApp.csproj --configuration Release  # Aplica as migrações no banco de dados
 
+    # Passo 7: Publicar a aplicação
     - name: Publish the application
-      run: dotnet publish src/PipelineApp/PipelineApp.csproj --configuration Release --output ./publish
+      run: dotnet publish src/PipelineApp/PipelineApp.csproj --configuration Release --output ./publish  # Publica o projeto
 
+    # Passo 8: Implantação (exemplo genérico, você pode ajustar conforme sua necessidade)
     - name: Deploy to production
-      run: echo "Deploying to production..."
+      run: echo "Deploying to production..."  # Aqui você colocaria o comando para enviar o projeto para o ambiente de produção
