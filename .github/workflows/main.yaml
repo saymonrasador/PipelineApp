@@ -1,36 +1,59 @@
 name: CI/CD Pipeline
 
+# Eventos que disparam o workflow
 on:
   push:
     branches:
       - develop
+  pull_request:
+    branches:
+      - develop
   schedule:
-    - cron: "0 21 * * *" # Diariamente às 21:00
+    - cron: "0 21 * * *" # Executa diariamente às 21:00 para o branch main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        branch:
+          - develop
+          - main
+
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0
+        dotnet-version: 8.0
 
-    - name: Restore dependencies
+    - name: Install Dependencies
       run: dotnet restore src/PipelineApp/PipelineApp.csproj
 
-    - name: Build the project
+    - name: Build Project
       run: dotnet build --configuration Release src/PipelineApp/PipelineApp.csproj
 
-    - name: Apply Database Migrations
+    - name: Install EF Tools
+      run: dotnet tool install --global dotnet-ef
+
+    - name: Run Database Migrations
       env:
         CONNECTION_STRING: ${{ secrets.DEVELOP_DB_URL }}
+      if: matrix.branch == 'develop'
       run: |
         dotnet ef database update --project src/PipelineApp/PipelineApp.csproj
 
-    - name: Deploy index.html
-      run: echo "Deploy process for index.html" # Placeholder para integração de deploy
+    - name: Run Database Migrations for Main
+      env:
+        CONNECTION_STRING: ${{ secrets.MAIN_DB_URL }}
+      if: matrix.branch == 'main'
+      run: |
+        dotnet ef database update --project src/PipelineApp/PipelineApp.csproj
+
+    - name: Deploy Static HTML
+      run: |
+        echo "Deploying index.html for ${{ matrix.branch }}"
+        # Substituir por comandos reais de deploy estático, como copiar para um servidor
