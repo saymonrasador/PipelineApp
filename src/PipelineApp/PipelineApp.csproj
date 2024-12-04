@@ -1,4 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+ <!-- O arquivo .csproj informa ao SDK do .NET como construir o projeto. Ele especifica: -->
+ <!-- Configura o uso do .NET 8.0. -->
+ <!-- Integra ferramentas para Entity Framework Core (EF Core) e PostgreSQL. -->
+ <!-- Garante a inclusão de pacotes para manipulação de configuração e JSON. -->
+
+ <!-- É ativado quando executado algum comando como dotnet build, dotnet restore, dotnet ef migrations add <NomeDaMigracao>, dotnet ef database update -->
+
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,6 +14,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+
+ <!-- Lista as dependências externas (pacotes NuGet) necessárias para o projeto -->
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.2" />
