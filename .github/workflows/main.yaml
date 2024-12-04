@@ -1,6 +1,6 @@
 name: CI/CD Pipeline
 
-# Eventos que disparam o workflow
+# É ativado sempre que há qualquer commit no branch develop, PRs abertos para o branch develop ou quando são 21h
 on:
   push:
     branches:
@@ -11,6 +11,7 @@ on:
   schedule:
     - cron: "0 21 * * *" # Executa diariamente às 21:00 para o branch main
 
+# Quando ativado ele executa as seguintes tarefas:
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -22,23 +23,29 @@ jobs:
           - main
 
     steps:
+    # Baixa o código para o ambiente de execução.
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    # Baixa e instala a versão 8.0 do .NET SDK.
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 8.0
 
+    # Executa dotnet restore no projeto para baixar pacotes necessários.
     - name: Install Dependencies
       run: dotnet restore src/PipelineApp/PipelineApp.csproj
 
+    # Compila o código usando dotnet build no modo Release.
     - name: Build Project
       run: dotnet build --configuration Release src/PipelineApp/PipelineApp.csproj
 
+    # Instala dotnet ef golbal
     - name: Install EF Tools
       run: dotnet tool install --global dotnet-ef
 
+    # Executa migrações no banco de desenvolvimento (DEVELOP_DB_URL).
     - name: Run Database Migrations
       env:
         CONNECTION_STRING: ${{ secrets.DEVELOP_DB_URL }}
@@ -46,6 +53,7 @@ jobs:
       run: |
         dotnet ef database update --project src/PipelineApp/PipelineApp.csproj
 
+    # Executa migrações no banco de produção (MAIN_DB_URL).
     - name: Run Database Migrations for Main
       env:
         CONNECTION_STRING: ${{ secrets.MAIN_DB_URL }}
@@ -53,6 +61,7 @@ jobs:
       run: |
         dotnet ef database update --project src/PipelineApp/PipelineApp.csproj
 
+    # Simula o deploy do arquivo index.html para os dois branches.
     - name: Deploy Static HTML
       run: |
         echo "Deploying index.html for ${{ matrix.branch }}"
