@@ -1,5 +1,6 @@
 name: Azure Static Web Apps CI/CD
 
+# É ativado sempre que há um commit na branch main ou um PR é aberto, sincronizado, reaberto ou fechado para o branch main.
 on:
   push:
     branches:
@@ -9,17 +10,23 @@ on:
     branches:
       - main
 
+# Quando ativado ele executa as seguintes tarefas:
 jobs:
+
+  # PRIMEIRO JOB
   build_and_deploy_job:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
+
+    # Baixa o código do repositório GitHub
     name: Build and Deploy Job
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: true
           lfs: false
-
+      # Usa o token secreto AZURE_STATIC_WEB_APPS_API_TOKEN_DELIGHTFUL_WAVE_07AF55C10 para autenticar no Azure 
+      # e atualiza o conteúdo estático hospedado na Azure Static Web App. 
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -34,9 +41,12 @@ jobs:
           output_location: "." # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
 
+  # SEGUNDO JOB
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
+
+    # Usa a ação "close" para informar ao Azure que o PR foi encerrado
     name: Close Pull Request Job
     steps:
       - name: Close Pull Request
