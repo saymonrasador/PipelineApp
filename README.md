@@ -93,11 +93,6 @@ Certifique-se de configurar as variáveis de ambiente como secrets no GitHub:
 
 ---
 
-#### Dependências:
-Caso queira forçar o deploy manualmente, faça um push para a branch correspondente:
-```bash
-   git push origin develop
-
 
 ### **Banco de Dados**
 1. **Frameworks e Pacotes:**
